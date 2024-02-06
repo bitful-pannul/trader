@@ -18,6 +18,8 @@ use alloy_signer::{
     LocalWallet, Signer, SignerSync, Transaction, Wallet,
 };
 
+mod helpers;
+
 wit_bindgen::generate!({
     path: "wit",
     world: "process",
@@ -104,45 +106,60 @@ call_init!(init);
 fn init(our: Address) {
     println!("trader: begin");
 
-    let mut wallet = {
-        let mut temp_wallet: Option<Wallet<SigningKey>> = None;
+    // this block is essentially a messy CLI initialization app,
+    // todo fix it up.
+    let mut wallet = loop {
+        let temp_wallet: Option<Wallet<SigningKey>>;
 
-        // check if there's existing state to load the wallet from
-        // todo encrypt, store in file instead?
-        if let Some(state) = get_state() {
-            let pk_string = String::from_utf8(state).unwrap();
-            let wallet = pk_string.parse::<LocalWallet>().unwrap();
-            temp_wallet = Some(wallet);
-            println!(
-                "loaded wallet: {:?}",
-                temp_wallet.as_ref().unwrap().address()
-            );
-        } else {
-            // No existing state, prompt for wallet input
-            println!("no wallet loaded, input a key");
-            loop {
-                let msg = await_message().unwrap();
-                if let Ok(s) = String::from_utf8(msg.body().to_vec()) {
-                    if let Ok(parsed_wallet) = s.parse::<LocalWallet>() {
+        if let Some(encrypted_state) = get_state() {
+            println!("Enter password to unlock wallet:");
+            let password_msg = await_message().unwrap();
+            let password_str =
+                String::from_utf8(password_msg.body().to_vec()).unwrap_or_else(|_| "".to_string());
+
+            match helpers::decrypt_data(&encrypted_state, &password_str) {
+                Ok(decrypted_state) => match String::from_utf8(decrypted_state)
+                    .ok()
+                    .and_then(|wd| wd.parse::<LocalWallet>().ok())
+                {
+                    Some(parsed_wallet) => {
                         println!(
-                            "trader: loaded wallet with address: {:?}",
+                            "Trader: Loaded wallet with address: {:?}",
                             parsed_wallet.address()
                         );
                         temp_wallet = Some(parsed_wallet);
-                        set_state(s.as_bytes());
-                        break;
-                    } else {
-                        println!("trader: failed key parse..");
+                        break temp_wallet; // Exit loop on success
                     }
-                } else {
-                    println!("trader: failed key msg parse..");
-                }
+                    None => println!("Failed to parse wallet, try again."),
+                },
+                Err(_) => println!("Decryption failed, try again."),
+            }
+        } else {
+            println!("No wallet loaded, input a key:");
+            let wallet_msg = await_message().unwrap();
+            let wallet_data_str = String::from_utf8(wallet_msg.body().to_vec()).unwrap();
+
+            println!("Input a password to save it:");
+            let password_msg = await_message().unwrap();
+            let password_str = String::from_utf8(password_msg.body().to_vec()).unwrap();
+
+            let encrypted_wallet_data =
+                helpers::encrypt_data(wallet_data_str.as_bytes(), &password_str);
+            set_state(&encrypted_wallet_data);
+
+            if let Ok(parsed_wallet) = wallet_data_str.parse::<LocalWallet>() {
+                println!(
+                    "Trader: Loaded wallet with address: {:?}",
+                    parsed_wallet.address()
+                );
+                temp_wallet = Some(parsed_wallet);
+                break temp_wallet; // Exit loop on success
+            } else {
+                println!("Failed to parse wallet key, try again.");
             }
         }
-
-        // Move the wallet out of the Option, assuming it's been initialized at this point
-        temp_wallet.unwrap()
-    };
+    }
+    .expect("Failed to initialize wallet");
 
     loop {
         match handle_message(&our, &mut wallet) {
