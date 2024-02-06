@@ -1,0 +1,15 @@
+[
+    {
+        "process_name": "trader",
+        "process_wasm_path": "/trader.wasm",
+        "on_exit": "Restart",
+        "request_networking": true,
+        "request_capabilities": [
+            "http_server:distro:sys",
+            "net:distro:sys",
+	    "eth:distro:sys"
+        ],
+        "grant_capabilities": [],
+        "public": true
+    }
+]
