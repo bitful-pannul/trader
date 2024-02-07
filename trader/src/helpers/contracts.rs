@@ -28,12 +28,20 @@ sol! {
 
 sol! {
     #[derive(Debug)]
+    interface IUniswapV2Factory {
+        function getPair(address tokenA, address tokenB) external view returns (address pair);
+    }
+}
+
+sol! {
+    #[derive(Debug)]
     interface IUniswapV2Pair {
         function token0() external view returns (address);
         function token1() external view returns (address);
         function getReserves() external view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast);
     }
 }
+
 sol! {
     #[derive(Debug)]
     interface IUniswapV2Router01 {

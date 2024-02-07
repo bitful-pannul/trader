@@ -17,7 +17,7 @@ use alloy_signer::{k256::ecdsa::SigningKey, LocalWallet, Signer, SignerSync, Tra
 
 mod helpers;
 use crate::helpers::{
-    contracts::{IUniswapV2Pair, IUniswapV2Router01, IERC20},
+    contracts::{IUniswapV2Factory, IUniswapV2Pair, IUniswapV2Router01, IERC20},
     encryption::{decrypt_data, encrypt_data},
 };
 
