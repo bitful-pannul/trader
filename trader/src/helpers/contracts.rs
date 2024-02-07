@@ -1,8 +1,34 @@
-use alloy_sol_types::{sol, SolCall, SolConstructor, SolInterface};
-
-// Here we define the types from the ABIs we need.
+use alloy_primitives::Address;
+use alloy_sol_types::sol;
+use lazy_static::lazy_static;
+use std::collections::HashMap;
+// here we define the types from the ABIs we need.
 // we could compile the contracts, and import their entire JSONs,
 // but here we go the lightweight route and only define the functions that we need!
+
+// contract addresses for Sepolia and Optimism (for now)
+lazy_static! {
+    pub static ref WETH: HashMap<u64, Address> = {
+        let mut m = HashMap::new();
+        m.insert(10, "0x4200000000000000000000000000000000000006".parse::<Address>().unwrap()); // Optimism
+        m.insert(11155111, "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9".parse::<Address>().unwrap()); // Sepolia
+        m
+    };
+
+    pub static ref FACTORY: HashMap<u64, Address> = {
+        let mut m = HashMap::new();
+        m.insert(10, "0x7E0987E5b3a30e3f2828572Bb659A548460a3003".parse::<Address>().unwrap());
+        m.insert(11155111,"0x7E0987E5b3a30e3f2828572Bb659A548460a3003".parse::<Address>().unwrap());
+        m
+    };
+
+    pub static ref ROUTER: HashMap<u64, Address> = {
+        let mut m = HashMap::new();
+        m.insert(10, "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2".parse::<Address>().unwrap());
+        m.insert(11155111, "0xC532a74256D3Db42D0Bf7a0400fEFDbad7694008".parse::<Address>().unwrap());
+        m
+    };
+}
 
 sol! {
     /// Interface of the ERC20 standard as defined in [the EIP].
