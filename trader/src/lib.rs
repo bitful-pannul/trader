@@ -1,23 +1,25 @@
 use alloy_consensus::TxKind;
+use alloy_sol_types::{SolCall, SolValue};
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
 use kinode_process_lib::{
     await_message, call_init,
     eth::{
-        get_balance, get_block_number, get_chain_id, get_gas_price, get_transaction_count,
+        call, get_balance, get_block_number, get_chain_id, get_gas_price, get_transaction_count,
         send_raw_transaction,
     },
     get_state, println, set_state, Address, Message,
 };
 
 use alloy_primitives::{Address as EthAddress, Bytes, U256};
-
+use alloy_rpc_types::{CallInput, CallRequest};
 use alloy_signer::{k256::ecdsa::SigningKey, LocalWallet, Signer, SignerSync, Transaction, Wallet};
 
 mod helpers;
 use crate::helpers::{
-    contracts::{IUniswapV2Factory, IUniswapV2Pair, IUniswapV2Router01, IERC20},
+    calls::{get_erc20_info, get_token_price},
+    contracts::{IUniswapV2Factory, FACTORY, WETH},
     encryption::{decrypt_data, encrypt_data},
 };
 
@@ -31,7 +33,7 @@ wit_bindgen::generate!({
 
 #[derive(Debug, Serialize, Deserialize)]
 enum TradeRequest {
-    Buy { address: String },
+    Buy,
     Info,
     Send { amount: u64, to: String },
 }
@@ -63,8 +65,54 @@ fn handle_message(our: &Address, wallet: &mut Wallet<SigningKey>) -> anyhow::Res
                 println!("| Block Number     | {:<30} |", block_number);
                 println!("+------------------+--------------------------------+");
             }
-            TradeRequest::Buy { address } => {
-                println!("Buying from {:?}", address);
+            TradeRequest::Buy => {
+                println!("entered buy mode, enter contract address:");
+                let contract_address = await_message()?;
+                let contract_address = String::from_utf8(contract_address.body().to_vec())?;
+                let contract_address = EthAddress::from_str(&contract_address)?;
+
+                let chain_id = get_chain_id()?.to::<u64>();
+                let (decimals, symbol) = get_erc20_info(contract_address)?;
+                println!("getting WETH pair for {:?}", symbol);
+
+                let WETH_ADDRESS = WETH.get(&chain_id).ok_or_else(|| {
+                    anyhow::anyhow!("WETH not found for chain_id: {:?}", chain_id)
+                })?;
+
+                let FACTORY_ADDRESS = FACTORY.get(&chain_id).ok_or_else(|| {
+                    anyhow::anyhow!("WETH not found for chain_id: {:?}", chain_id)
+                })?;
+
+                let func_call = IUniswapV2Factory::getPairCall {
+                    tokenA: *WETH_ADDRESS,
+                    tokenB: contract_address,
+                }
+                .abi_encode();
+                // this should be a better builder...
+                let req = CallRequest {
+                    from: None,
+                    to: Some(FACTORY_ADDRESS.clone()),
+                    input: CallInput {
+                        input: Some(func_call.into()),
+                        data: None,
+                    },
+                    ..Default::default()
+                };
+                let res = call(req, None)?;
+
+                let pair_address = EthAddress::abi_decode(&res, false)?;
+                println!("got pair address: {:?}", pair_address);
+
+                let (p0, p1) =
+                    get_token_price(pair_address, "WETH", &symbol, 18, decimals.to::<u8>())?;
+                println!("{:.4} {} per {}", p0, symbol, "WETH");
+                println!("{:.4} {} per {}", p1, "WETH", symbol);
+
+                println!("input how much you want to buy:");
+                let amount_in = await_message()?;
+                let amount_in = String::from_utf8(amount_in.body().to_vec())?.parse::<u64>()?;
+                // manual 5% slippage rn...
+                let min_amount_out = p1 * amount_in * 0.95;
             }
             TradeRequest::Send { amount, to } => {
                 let to = EthAddress::from_str(&to)?;
@@ -103,6 +151,7 @@ fn init(our: Address) {
 
     // this block is essentially a messy CLI initialization app,
     // todo fix it up.
+    // also todo, save pk in file, store bookmarks etc in state.
     let mut wallet = loop {
         let temp_wallet: Option<Wallet<SigningKey>>;
 
