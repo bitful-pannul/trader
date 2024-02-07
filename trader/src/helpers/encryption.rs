@@ -1,3 +1,4 @@
+/// Address & Encryption Constants, helper functions.
 use crypto::aead::{AeadDecryptor, AeadEncryptor};
 use crypto::aes::KeySize::KeySize256;
 use crypto::aes_gcm::AesGcm;
@@ -78,3 +79,7 @@ pub fn decrypt_data(
         Err("Decryption failed".into())
     }
 }
+
+// const SEPOLIA_WETH = "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9"
+// const SEPOLIA_UNISWAP_ROUTER = "0xC532a74256D3Db42D0Bf7a0400fEFDbad7694008"
+// cosnt SEPOLIA_FACTORY = "0x7E0987E5b3a30e3f2828572Bb659A548460a3003"

@@ -8,17 +8,18 @@ use kinode_process_lib::{
         get_balance, get_block_number, get_chain_id, get_gas_price, get_transaction_count,
         send_raw_transaction,
     },
-    get_state, println, set_state, Address, Message, ProcessId, Request, Response,
+    get_state, println, set_state, Address, Message,
 };
 
 use alloy_primitives::{Address as EthAddress, Bytes, U256};
 
-use alloy_signer::{
-    k256::{ecdsa::SigningKey, Secp256k1},
-    LocalWallet, Signer, SignerSync, Transaction, Wallet,
-};
+use alloy_signer::{k256::ecdsa::SigningKey, LocalWallet, Signer, SignerSync, Transaction, Wallet};
 
 mod helpers;
+use crate::helpers::{
+    contracts::{IUniswapV2Pair, IUniswapV2Router01, IERC20},
+    encryption::{decrypt_data, encrypt_data},
+};
 
 wit_bindgen::generate!({
     path: "wit",
@@ -30,10 +31,8 @@ wit_bindgen::generate!({
 
 #[derive(Debug, Serialize, Deserialize)]
 enum TradeRequest {
+    Buy { address: String },
     Info,
-    SetAccount,
-    Password,
-    Balance,
     Send { amount: u64, to: String },
 }
 
@@ -49,10 +48,6 @@ fn handle_message(our: &Address, wallet: &mut Wallet<SigningKey>) -> anyhow::Res
             ref body,
             ..
         } => match serde_json::from_slice::<TradeRequest>(body)? {
-            TradeRequest::Balance => {
-                let eth_balance = get_balance(wallet.address(), None)?;
-                println!("account eth balance: {}", eth_balance.to::<u64>());
-            }
             TradeRequest::Info => {
                 let address = wallet.address();
                 let eth_balance = get_balance(wallet.address(), None)?;
@@ -68,9 +63,9 @@ fn handle_message(our: &Address, wallet: &mut Wallet<SigningKey>) -> anyhow::Res
                 println!("| Block Number     | {:<30} |", block_number);
                 println!("+------------------+--------------------------------+");
             }
-
-            TradeRequest::SetAccount => {}
-            TradeRequest::Password => {}
+            TradeRequest::Buy { address } => {
+                println!("Buying from {:?}", address);
+            }
             TradeRequest::Send { amount, to } => {
                 let to = EthAddress::from_str(&to)?;
                 let chain_id = get_chain_id()?;
@@ -117,7 +112,7 @@ fn init(our: Address) {
             let password_str =
                 String::from_utf8(password_msg.body().to_vec()).unwrap_or_else(|_| "".to_string());
 
-            match helpers::decrypt_data(&encrypted_state, &password_str) {
+            match decrypt_data(&encrypted_state, &password_str) {
                 Ok(decrypted_state) => match String::from_utf8(decrypted_state)
                     .ok()
                     .and_then(|wd| wd.parse::<LocalWallet>().ok())
@@ -143,8 +138,7 @@ fn init(our: Address) {
             let password_msg = await_message().unwrap();
             let password_str = String::from_utf8(password_msg.body().to_vec()).unwrap();
 
-            let encrypted_wallet_data =
-                helpers::encrypt_data(wallet_data_str.as_bytes(), &password_str);
+            let encrypted_wallet_data = encrypt_data(wallet_data_str.as_bytes(), &password_str);
             set_state(&encrypted_wallet_data);
 
             if let Ok(parsed_wallet) = wallet_data_str.parse::<LocalWallet>() {
