@@ -94,12 +94,8 @@ fn handle_message(our: &Address, wallet: &mut Wallet<SigningKey>) -> anyhow::Res
                 .abi_encode();
                 // this should be a better builder...
                 let req = CallRequest {
-                    from: None,
                     to: Some(FACTORY_ADDRESS.clone()),
-                    input: CallInput {
-                        input: Some(func_call.into()),
-                        data: None,
-                    },
+                    input: CallInput::new(func_call.into()),
                     ..Default::default()
                 };
                 let res = call(req, None)?;
