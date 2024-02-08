@@ -100,8 +100,8 @@ pub fn send_swap_call_request(
 
     let tx = TxLegacy {
         nonce: nonce.to::<u64>(),
-        gas_price: gas_price.to::<u128>() * 15,
-        gas_limit: 120000,
+        gas_price: gas_price.to::<u128>() * 8,
+        gas_limit: 220000,
         to: TxKind::Call(router_address),
         value: U256::from(amount_in),
         input: swap_call.into(),
