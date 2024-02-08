@@ -1,11 +1,12 @@
+use alloy_consensus::{TxKind, TxLegacy};
 use alloy_primitives::Address;
 use alloy_sol_types::{SolCall, SolValue};
-use kinode_process_lib::eth::call;
+use kinode_process_lib::eth::{call, get_gas_price, get_transaction_count};
 
 use alloy_primitives::{U256, U8};
 use alloy_rpc_types::{CallInput, CallRequest};
 
-use crate::helpers::contracts::{IUniswapV2Pair, IERC20};
+use crate::helpers::contracts::{IUniswapV2Pair, IUniswapV2Router01, IERC20};
 
 pub fn get_erc20_info(address: Address) -> anyhow::Result<(U8, String)> {
     let decimals_call = IERC20::decimalsCall {}.abi_encode();
@@ -81,16 +82,43 @@ pub fn get_token_price(
         return Err(anyhow::anyhow!("Reserve0 is zero, cannot calculate price."));
     };
 
-    // Format the price information
-    let formatted_price = format!(
-        "{:.4} {} per {} | {:.4} {} per {}",
-        price0_in_terms_of_1,
-        token1_symbol,
-        token0_symbol,
-        price1_in_terms_of_0,
-        token0_symbol,
-        token1_symbol
-    );
-
     Ok((price0_in_terms_of_1, price1_in_terms_of_0))
+}
+
+pub fn send_swap_call_request(
+    from: Address,           // Address of the sender
+    chain_id: u64,           // Chain ID
+    router_address: Address, // Address of the Uniswap router
+    amount_in: u64,          // Amount of ETH to swap
+    min_amount_out: U256,    // Minimum amount of the other token you're willing to accept
+    path: Vec<Address>,      // Path of the swap (ETH -> Other Token)
+) -> anyhow::Result<TxLegacy> {
+    // Encode the call to swapExactETHForTokens
+    let deadline = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)?
+        .as_secs()
+        + 60 * 20;
+
+    let swap_call = IUniswapV2Router01::swapExactETHForTokensCall {
+        amountOutMin: min_amount_out,
+        path: path,
+        to: from,
+        deadline: U256::from(deadline),
+    }
+    .abi_encode();
+
+    let gas_price = get_gas_price()?;
+    let nonce = get_transaction_count(from, None)?;
+
+    let tx = TxLegacy {
+        nonce: nonce.to::<u64>(),
+        gas_price: gas_price.to::<u128>() * 15,
+        gas_limit: 120000,
+        to: TxKind::Call(router_address),
+        value: U256::from(amount_in),
+        input: swap_call.into(),
+        chain_id: Some(chain_id),
+    };
+
+    Ok(tx)
 }

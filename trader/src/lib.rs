@@ -18,8 +18,8 @@ use alloy_signer::{k256::ecdsa::SigningKey, LocalWallet, Signer, SignerSync, Tra
 
 mod helpers;
 use crate::helpers::{
-    calls::{get_erc20_info, get_token_price},
-    contracts::{IUniswapV2Factory, FACTORY, WETH},
+    calls::{get_erc20_info, get_token_price, send_swap_call_request},
+    contracts::{IUniswapV2Factory, FACTORY, ROUTER, WETH},
     encryption::{decrypt_data, encrypt_data},
 };
 
@@ -83,6 +83,10 @@ fn handle_message(our: &Address, wallet: &mut Wallet<SigningKey>) -> anyhow::Res
                     anyhow::anyhow!("WETH not found for chain_id: {:?}", chain_id)
                 })?;
 
+                let ROUTER_ADDRESS = ROUTER.get(&chain_id).ok_or_else(|| {
+                    anyhow::anyhow!("WETH not found for chain_id: {:?}", chain_id)
+                })?;
+
                 let func_call = IUniswapV2Factory::getPairCall {
                     tokenA: *WETH_ADDRESS,
                     tokenB: contract_address,
@@ -111,8 +115,32 @@ fn handle_message(our: &Address, wallet: &mut Wallet<SigningKey>) -> anyhow::Res
                 println!("input how much you want to buy:");
                 let amount_in = await_message()?;
                 let amount_in = String::from_utf8(amount_in.body().to_vec())?.parse::<u64>()?;
-                // manual 5% slippage rn...
-                let min_amount_out = p1 * amount_in * 0.95;
+
+                // manual 5% slippage rn. or 100% is there mev on sepolia?
+                let amount_in_scaled = U256::from(amount_in);
+
+                // let min_amount_out = p0 * amount_in_scaled;
+                // let min_amount_out = U256::from(min_amount_out as u64);
+
+                let path = vec![*WETH_ADDRESS, contract_address];
+
+                let mut tx = send_swap_call_request(
+                    wallet.address(),
+                    chain_id,
+                    *ROUTER_ADDRESS,
+                    amount_in,
+                    U256::from(0),
+                    path,
+                )?;
+
+                let sig = wallet.sign_transaction_sync(&mut tx)?;
+                let signed_tx = tx.into_signed(sig);
+
+                let mut buf = vec![];
+                signed_tx.encode_signed(&mut buf);
+
+                let tx_hash = send_raw_transaction(buf.into())?;
+                println!("sent! with tx_hash {:?}", tx_hash);
             }
             TradeRequest::Send { amount, to } => {
                 let to = EthAddress::from_str(&to)?;
