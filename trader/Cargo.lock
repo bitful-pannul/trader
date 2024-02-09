@@ -20,7 +20,7 @@ checksum = "f26201604c87b1e01bd3d98f8d5d9a8fcbb815e8cedb41ffccbeb4bf593a35fe"
 [[package]]
 name = "alloy-consensus"
 version = "0.1.0"
-source = "git+https://github.com/alloy-rs/alloy#32618e9243a761858a0843e7e55575e48fdbf500"
+source = "git+https://github.com/alloy-rs/alloy?rev=098ad56#098ad5657d55bbc5fe9469ede2a9ca79def738f2"
 dependencies = [
  "alloy-eips",
  "alloy-network",
@@ -31,7 +31,7 @@ dependencies = [
 [[package]]
 name = "alloy-eips"
 version = "0.1.0"
-source = "git+https://github.com/alloy-rs/alloy#32618e9243a761858a0843e7e55575e48fdbf500"
+source = "git+https://github.com/alloy-rs/alloy?rev=098ad56#098ad5657d55bbc5fe9469ede2a9ca79def738f2"
 dependencies = [
  "alloy-primitives",
  "alloy-rlp",
@@ -42,7 +42,7 @@ dependencies = [
 [[package]]
 name = "alloy-json-rpc"
 version = "0.1.0"
-source = "git+https://github.com/alloy-rs/alloy#32618e9243a761858a0843e7e55575e48fdbf500"
+source = "git+https://github.com/alloy-rs/alloy?rev=098ad56#098ad5657d55bbc5fe9469ede2a9ca79def738f2"
 dependencies = [
  "alloy-primitives",
  "serde",
@@ -53,7 +53,7 @@ dependencies = [
 [[package]]
 name = "alloy-network"
 version = "0.1.0"
-source = "git+https://github.com/alloy-rs/alloy#32618e9243a761858a0843e7e55575e48fdbf500"
+source = "git+https://github.com/alloy-rs/alloy?rev=098ad56#098ad5657d55bbc5fe9469ede2a9ca79def738f2"
 dependencies = [
  "alloy-eips",
  "alloy-json-rpc",
@@ -109,7 +109,7 @@ dependencies = [
 [[package]]
 name = "alloy-rpc-types"
 version = "0.1.0"
-source = "git+https://github.com/alloy-rs/alloy#32618e9243a761858a0843e7e55575e48fdbf500"
+source = "git+https://github.com/alloy-rs/alloy?rev=098ad56#098ad5657d55bbc5fe9469ede2a9ca79def738f2"
 dependencies = [
  "alloy-primitives",
  "alloy-rlp",
@@ -122,7 +122,7 @@ dependencies = [
 [[package]]
 name = "alloy-signer"
 version = "0.1.0"
-source = "git+https://github.com/alloy-rs/alloy#32618e9243a761858a0843e7e55575e48fdbf500"
+source = "git+https://github.com/alloy-rs/alloy?rev=098ad56#098ad5657d55bbc5fe9469ede2a9ca79def738f2"
 dependencies = [
  "alloy-network",
  "alloy-primitives",
@@ -167,7 +167,7 @@ dependencies = [
 [[package]]
 name = "alloy-transport"
 version = "0.1.0"
-source = "git+https://github.com/alloy-rs/alloy#32618e9243a761858a0843e7e55575e48fdbf500"
+source = "git+https://github.com/alloy-rs/alloy?rev=098ad56#098ad5657d55bbc5fe9469ede2a9ca79def738f2"
 dependencies = [
  "alloy-json-rpc",
  "base64 0.21.7",
@@ -712,6 +712,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "frankenstein"
+version = "0.30.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3ba69a8028d805f0ef30f5fe81086ab7c0992588b6b3afd7a3086154aa57a82e"
+dependencies = [
+ "serde",
+ "thiserror",
+ "typed-builder",
+]
+
+[[package]]
 name = "fuchsia-cprng"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -954,8 +965,8 @@ dependencies = [
 
 [[package]]
 name = "kinode_process_lib"
-version = "0.5.7"
-source = "git+https://github.com/kinode-dao/process_lib?rev=baad9cc#baad9cc103ec4d4f0cfdb3a82673b2e15354e203"
+version = "0.6.0"
+source = "git+https://github.com/kinode-dao/process_lib?rev=8d58cfb#8d58cfba0302681b6971cac26ea3f7e49d4602ec"
 dependencies = [
  "alloy-json-rpc",
  "alloy-primitives",
@@ -1824,6 +1835,7 @@ dependencies = [
  "alloy-sol-types",
  "anyhow",
  "bincode",
+ "frankenstein",
  "kinode_process_lib",
  "lazy_static",
  "rand 0.8.5",
@@ -1831,6 +1843,26 @@ dependencies = [
  "serde",
  "serde_json",
  "wit-bindgen",
+]
+
+[[package]]
+name = "typed-builder"
+version = "0.18.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "444d8748011b93cb168770e8092458cb0f8854f931ff82fdf6ddfbd72a9c933e"
+dependencies = [
+ "typed-builder-macro",
+]
+
+[[package]]
+name = "typed-builder-macro"
+version = "0.18.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "563b3b88238ec95680aef36bdece66896eaa7ce3c0f1b4f39d38fb2435261352"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.48",
 ]
 
 [[package]]

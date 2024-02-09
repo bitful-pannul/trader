@@ -13,7 +13,7 @@ use kinode_process_lib::{
 };
 
 use alloy_primitives::{Address as EthAddress, Bytes, U256};
-use alloy_rpc_types::{CallInput, CallRequest};
+use alloy_rpc_types::request::{TransactionInput, TransactionRequest};
 use alloy_signer::{k256::ecdsa::SigningKey, LocalWallet, Signer, SignerSync, Transaction, Wallet};
 
 mod helpers;
@@ -93,9 +93,9 @@ fn handle_message(our: &Address, wallet: &mut Wallet<SigningKey>) -> anyhow::Res
                 }
                 .abi_encode();
                 // this should be a better builder...
-                let req = CallRequest {
+                let req = TransactionRequest {
                     to: Some(FACTORY_ADDRESS.clone()),
-                    input: CallInput::new(func_call.into()),
+                    input: TransactionInput::new(func_call.into()),
                     ..Default::default()
                 };
                 let res = call(req, None)?;

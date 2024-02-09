@@ -4,24 +4,24 @@ use alloy_sol_types::{SolCall, SolValue};
 use kinode_process_lib::eth::{call, get_gas_price, get_transaction_count};
 
 use alloy_primitives::{U256, U8};
-use alloy_rpc_types::{CallInput, CallRequest};
+use alloy_rpc_types::request::{TransactionInput, TransactionRequest};
 
 use crate::helpers::contracts::{IUniswapV2Pair, IUniswapV2Router01, IERC20};
 
 pub fn get_erc20_info(address: Address) -> anyhow::Result<(U8, String)> {
     let decimals_call = IERC20::decimalsCall {}.abi_encode();
-    let decimals_req = CallRequest {
+    let decimals_req = TransactionRequest {
         to: Some(address),
-        input: CallInput::new(decimals_call.into()),
+        input: TransactionInput::new(decimals_call.into()),
         ..Default::default()
     };
     let decimals_res = call(decimals_req, None)?;
 
     let symbol_call = IERC20::symbolCall {}.abi_encode();
 
-    let symbol_req = CallRequest {
+    let symbol_req = TransactionRequest {
         to: Some(address),
-        input: CallInput::new(symbol_call.into()),
+        input: TransactionInput::new(symbol_call.into()),
         ..Default::default()
     };
     let symbol_res = call(symbol_req, None)?;
@@ -43,9 +43,9 @@ pub fn get_token_price(
 ) -> anyhow::Result<(f64, f64)> {
     // Encode the call to getReserves on the pair contract
     let get_reserves_call = IUniswapV2Pair::getReservesCall {}.abi_encode();
-    let reserves_req = CallRequest {
+    let reserves_req = TransactionRequest {
         to: Some(pair_address),
-        input: CallInput::new(get_reserves_call.into()),
+        input: TransactionInput::new(get_reserves_call.into()),
         ..Default::default()
     };
     let reserves_res = call(reserves_req, None)?;
