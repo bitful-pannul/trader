@@ -1,10 +1,9 @@
 use alloy_consensus::{TxKind, TxLegacy};
-use alloy_primitives::Address;
 use alloy_sol_types::{SolCall, SolValue};
-use kinode_process_lib::eth::{call, get_gas_price, get_transaction_count};
-
-use alloy_primitives::{U256, U8};
-use alloy_rpc_types::request::{TransactionInput, TransactionRequest};
+use kinode_process_lib::eth::{
+    call, get_gas_price, get_transaction_count, Address, TransactionInput, TransactionRequest,
+    U256, U8,
+};
 
 use crate::helpers::contracts::{IUniswapV2Pair, IUniswapV2Router01, IERC20};
 

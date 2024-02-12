@@ -1,5 +1,5 @@
-use alloy_primitives::Address;
 use alloy_sol_types::sol;
+use kinode_process_lib::eth::Address;
 use lazy_static::lazy_static;
 use std::collections::HashMap;
 // here we define the types from the ABIs we need.

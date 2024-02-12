@@ -7,13 +7,12 @@ use kinode_process_lib::{
     await_message, call_init,
     eth::{
         call, get_balance, get_block_number, get_chain_id, get_gas_price, get_transaction_count,
-        send_raw_transaction,
+        send_raw_transaction, Address as EthAddress, Bytes, TransactionInput, TransactionRequest,
+        U256,
     },
     get_state, println, set_state, Address, Message,
 };
 
-use alloy_primitives::{Address as EthAddress, Bytes, U256};
-use alloy_rpc_types::request::{TransactionInput, TransactionRequest};
 use alloy_signer::{k256::ecdsa::SigningKey, LocalWallet, Signer, SignerSync, Transaction, Wallet};
 
 mod helpers;
